@@ -63,7 +63,7 @@ const StudentProfile = () => {
       console.log('✅ Profile API response status:', response.status);
       console.log('✅ Profile data received:', response.data);
       console.log('✅ Profile image path:', response.data?.profileImage);
-      
+
       setUserProfile(response.data);
       setFormData(prev => ({
         ...prev,
@@ -99,24 +99,26 @@ const StudentProfile = () => {
     }
   };
 
-  // ✅ FIXED: Clean function to get image URL
+  // ✅ FIXED: Clean function to get image URL using environment variable
   const getImageUrl = (filename) => {
     if (!filename) return null;
-    
+
     // If it's already a full URL, return as is
     if (filename.startsWith('http')) {
       return filename;
     }
-    
+
+    // Get base URL from environment variable
+    const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+
     // If it starts with /uploads, add base URL
     if (filename.startsWith('/uploads')) {
-      return `http://localhost:5000${filename}`;
+      return `${baseUrl}${filename}`;
     }
-    
-    // Otherwise, assume it's just a filename
-    return `http://localhost:5000/uploads/profiles/${filename}`;
-  };
 
+    // Otherwise, assume it's just a filename
+    return `${baseUrl}/uploads/profiles/${filename}`;
+  };
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({
@@ -150,7 +152,7 @@ const StudentProfile = () => {
 
   const handlePasswordChange = async (e) => {
     e.preventDefault();
-    
+
     const errors = {};
     if (!formData.currentPassword) {
       errors.currentPassword = 'Current password is required';
@@ -213,22 +215,22 @@ const StudentProfile = () => {
     try {
       setLoading(true);
       console.log('Uploading image...', file.name);
-      
+
       const response = await api.post('/auth/profile/image', formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
 
       console.log('Upload response:', response.data);
-      
+
       setUserProfile(response.data);
       updateUser(response.data);
       setImageError(false);
       setImageKey(Date.now());
-      
+
       toast.success('Profile picture updated successfully');
     } catch (error) {
       console.error('Failed to upload image:', error);
-      
+
       if (error.response?.status === 404) {
         toast.error('Image upload endpoint not found. Please check backend.');
       } else if (error.response?.data?.message) {
@@ -299,7 +301,7 @@ const StudentProfile = () => {
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
         {/* Cover Photo */}
         <div className="h-32 bg-gradient-to-r from-green-500 to-blue-600 dark:from-green-600 dark:to-blue-700"></div>
-        
+
         {/* Profile Info */}
         <div className="px-6 pb-6">
           {/* Avatar */}
@@ -331,7 +333,7 @@ const StudentProfile = () => {
                 />
               </label>
             </div>
-            
+
             {/* Role Badge */}
             <div className="mt-12">
               <span className="px-3 py-1 bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400 rounded-full text-sm font-medium flex items-center gap-1">
@@ -568,7 +570,7 @@ const StudentProfile = () => {
       {/* Security Settings */}
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
         <h2 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Security Settings</h2>
-        
+
         <div className="space-y-4">
           <button
             onClick={() => setShowPasswordModal(true)}
@@ -700,7 +702,7 @@ const StudentProfile = () => {
         <div className="space-y-4">
           <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
             <p className="text-sm text-red-700 dark:text-red-400">
-              <strong>Warning:</strong> This action is permanent and cannot be undone. 
+              <strong>Warning:</strong> This action is permanent and cannot be undone.
               All your data, including assignments, submissions, and progress will be permanently deleted.
             </p>
           </div>

@@ -96,14 +96,18 @@ const Navbar = ({ sidebarOpen, setSidebarOpen }) => {
   };
 
   // Helper function to get image URL
-  const getImageUrl = (filename) => {
-    if (!filename) return null;
-    if (filename.startsWith('http')) return filename;
-    if (filename.startsWith('/uploads')) {
-      return `http://localhost:5000${filename}`;
-    }
-    return `http://localhost:5000/uploads/profiles/${filename}`;
-  };
+const getImageUrl = (filename) => {
+  if (!filename) return null;
+  if (filename.startsWith('http')) return filename;
+  
+  // Get base URL from environment variable
+  const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+  
+  if (filename.startsWith('/uploads')) {
+    return `${baseUrl}${filename}`;
+  }
+  return `${baseUrl}/uploads/profiles/${filename}`;
+};
 
   return (
     <nav className="fixed top-0 z-50 w-full bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 transition-colors duration-300">

@@ -94,7 +94,7 @@ const AdminProfile = () => {
 
   const handlePasswordChange = async (e) => {
     e.preventDefault();
-    
+
     const errors = {};
     if (!formData.currentPassword) {
       errors.currentPassword = 'Current password is required';
@@ -131,7 +131,7 @@ const AdminProfile = () => {
       setPasswordErrors({});
     } catch (error) {
       console.error('Failed to change password:', error);
-      
+
       if (error.response?.data?.message) {
         toast.error(error.response.data.message);
       } else if (error.response?.data?.errors) {
@@ -146,24 +146,26 @@ const AdminProfile = () => {
     }
   };
 
-  // ✅ FIXED: Clean function to get image URL
+  // ✅ FIXED: Clean function to get image URL using environment variable
   const getImageUrl = (filename) => {
     if (!filename) return null;
-    
+
     // If it's already a full URL, return as is
     if (filename.startsWith('http')) {
       return filename;
     }
-    
+
+    // Get base URL from environment variable
+    const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+
     // If it starts with /uploads, add base URL
     if (filename.startsWith('/uploads')) {
-      return `http://localhost:5000${filename}`;
+      return `${baseUrl}${filename}`;
     }
-    
-    // Otherwise, assume it's just a filename
-    return `http://localhost:5000/uploads/profiles/${filename}`;
-  };
 
+    // Otherwise, assume it's just a filename
+    return `${baseUrl}/uploads/profiles/${filename}`;
+  };
   const handleImageUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -184,7 +186,7 @@ const AdminProfile = () => {
     try {
       setLoading(true);
       console.log('Uploading image...', file.name);
-      
+
       const response = await api.post('/auth/profile/image', formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
@@ -197,7 +199,7 @@ const AdminProfile = () => {
       toast.success('Profile image updated successfully');
     } catch (error) {
       console.error('Failed to upload image:', error);
-      
+
       if (error.response?.status === 404) {
         toast.error('Image upload endpoint not found. Please check backend.');
       } else if (error.response?.data?.message) {
@@ -246,7 +248,7 @@ const AdminProfile = () => {
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
         {/* Cover Photo */}
         <div className="h-32 bg-gradient-to-r from-primary-500 to-primary-600 dark:from-primary-600 dark:to-primary-700"></div>
-        
+
         {/* Profile Info */}
         <div className="px-6 pb-6">
           {/* Avatar */}
@@ -278,7 +280,7 @@ const AdminProfile = () => {
                 />
               </label>
             </div>
-            
+
             {/* Role Badge */}
             <div className="mt-12">
               <span className="px-3 py-1 bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-400 rounded-full text-sm font-medium flex items-center gap-1">
@@ -460,7 +462,7 @@ const AdminProfile = () => {
       {/* Security Settings */}
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
         <h2 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Security Settings</h2>
-        
+
         <div className="space-y-4">
           <button
             onClick={() => setShowPasswordModal(true)}

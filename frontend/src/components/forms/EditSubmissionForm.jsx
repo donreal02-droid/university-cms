@@ -63,21 +63,24 @@ const EditSubmissionForm = ({ assignment, submission, onClose, onSuccess }) => {
   };
 
   const handleViewFile = (filePath) => {
-    if (!filePath) return;
-    
-    // Construct correct URL for viewing
-    let fileUrl;
-    if (filePath.startsWith('http')) {
-      fileUrl = filePath;
-    } else if (filePath.startsWith('/')) {
-      fileUrl = `http://localhost:5000${filePath}`;
-    } else {
-      fileUrl = `http://localhost:5000/${filePath}`;
-    }
-    
-    console.log('Opening file:', fileUrl);
-    window.open(fileUrl, '_blank');
-  };
+  if (!filePath) return;
+  
+  // Get base URL from environment variable
+  const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+  
+  // Construct correct URL for viewing
+  let fileUrl;
+  if (filePath.startsWith('http')) {
+    fileUrl = filePath;
+  } else if (filePath.startsWith('/')) {
+    fileUrl = `${baseUrl}${filePath}`;
+  } else {
+    fileUrl = `${baseUrl}/${filePath}`;
+  }
+  
+  console.log('Opening file:', fileUrl);
+  window.open(fileUrl, '_blank');
+};
 
   const formatFileSize = (bytes) => {
     if (!bytes) return 'Unknown size';

@@ -2,10 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import api from '../../utils/api';
 import { useNavigate } from 'react-router-dom';
-import { 
-  UsersIcon, 
-  AcademicCapIcon, 
-  BuildingOfficeIcon, 
+import {
+  UsersIcon,
+  AcademicCapIcon,
+  BuildingOfficeIcon,
   BookOpenIcon,
   DocumentTextIcon,
   ClockIcon,
@@ -53,10 +53,13 @@ const AdminDashboard = () => {
   const getImageUrl = (filename) => {
     if (!filename) return null;
     if (filename.startsWith('http')) return filename;
+
+    const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+
     if (filename.startsWith('/uploads')) {
-      return `http://localhost:5000${filename}`;
+      return `${baseUrl}${filename}`;
     }
-    return `http://localhost:5000/uploads/profiles/${filename}`;
+    return `${baseUrl}/uploads/profiles/${filename}`;
   };
 
   useEffect(() => {
@@ -67,7 +70,7 @@ const AdminDashboard = () => {
     try {
       setLoading(true);
       const token = localStorage.getItem('token');
-      
+
       if (!token) {
         setError('No authentication token found. Please login again.');
         setLoading(false);
@@ -76,11 +79,11 @@ const AdminDashboard = () => {
 
       console.log('Fetching dashboard stats...');
       console.log('Token being sent:', token.substring(0, 20) + '...');
-      
+
       const response = await api.get('/dashboard/admin');
-      
+
       console.log('Dashboard data:', response.data);
-      
+
       if (response.data.success && response.data.data) {
         setStats(response.data.data);
         setError('');
@@ -275,10 +278,10 @@ const AdminDashboard = () => {
   };
 
   const statCards = [
-    { 
-      title: 'Total Students', 
-      value: counts?.students || 0, 
-      icon: UsersIcon, 
+    {
+      title: 'Total Students',
+      value: counts?.students || 0,
+      icon: UsersIcon,
       color: 'bg-blue-500',
       darkColor: 'dark:bg-blue-600',
       change: '+12%',
@@ -287,10 +290,10 @@ const AdminDashboard = () => {
       textColor: 'text-blue-600',
       darkTextColor: 'dark:text-blue-400'
     },
-    { 
-      title: 'Total Teachers', 
-      value: counts?.teachers || 0, 
-      icon: AcademicCapIcon, 
+    {
+      title: 'Total Teachers',
+      value: counts?.teachers || 0,
+      icon: AcademicCapIcon,
       color: 'bg-green-500',
       darkColor: 'dark:bg-green-600',
       change: '+4%',
@@ -299,10 +302,10 @@ const AdminDashboard = () => {
       textColor: 'text-green-600',
       darkTextColor: 'dark:text-green-400'
     },
-    { 
-      title: 'Departments', 
-      value: counts?.departments || 0, 
-      icon: BuildingOfficeIcon, 
+    {
+      title: 'Departments',
+      value: counts?.departments || 0,
+      icon: BuildingOfficeIcon,
       color: 'bg-yellow-500',
       darkColor: 'dark:bg-yellow-600',
       change: '+2',
@@ -311,10 +314,10 @@ const AdminDashboard = () => {
       textColor: 'text-yellow-600',
       darkTextColor: 'dark:text-yellow-400'
     },
-    { 
-      title: 'Subjects', 
-      value: counts?.subjects || 0, 
-      icon: BookOpenIcon, 
+    {
+      title: 'Subjects',
+      value: counts?.subjects || 0,
+      icon: BookOpenIcon,
       color: 'bg-purple-500',
       darkColor: 'dark:bg-purple-600',
       change: '+8',
@@ -323,10 +326,10 @@ const AdminDashboard = () => {
       textColor: 'text-purple-600',
       darkTextColor: 'dark:text-purple-400'
     },
-    { 
-      title: 'Assignments', 
-      value: counts?.assignments || 0, 
-      icon: DocumentTextIcon, 
+    {
+      title: 'Assignments',
+      value: counts?.assignments || 0,
+      icon: DocumentTextIcon,
       color: 'bg-indigo-500',
       darkColor: 'dark:bg-indigo-600',
       change: '+15',
@@ -335,10 +338,10 @@ const AdminDashboard = () => {
       textColor: 'text-indigo-600',
       darkTextColor: 'dark:text-indigo-400'
     },
-    { 
-      title: 'Pending Submissions', 
-      value: counts?.pendingSubmissions || 0, 
-      icon: ClockIcon, 
+    {
+      title: 'Pending Submissions',
+      value: counts?.pendingSubmissions || 0,
+      icon: ClockIcon,
       color: 'bg-red-500',
       darkColor: 'dark:bg-red-600',
       change: counts?.submissions ? `${Math.round((counts.pendingSubmissions / counts.submissions) * 100)}%` : '0%',
@@ -363,11 +366,11 @@ const AdminDashboard = () => {
         </div>
         <div className="bg-white dark:bg-gray-800 px-4 py-2 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
           <span className="text-sm font-medium text-gray-600 dark:text-gray-300">
-            {new Date().toLocaleDateString('en-US', { 
-              weekday: 'long', 
-              year: 'numeric', 
-              month: 'long', 
-              day: 'numeric' 
+            {new Date().toLocaleDateString('en-US', {
+              weekday: 'long',
+              year: 'numeric',
+              month: 'long',
+              day: 'numeric'
             })}
           </span>
         </div>

@@ -189,10 +189,11 @@ const StudentNotes = () => {
     }
 
     let fileUrl = note.fileUrl;
-    if (!fileUrl.startsWith('http')) {
-      const cleanPath = fileUrl.replace(/^.*?backend[\\/]/, '').replace(/\\/g, '/');
-      fileUrl = `http://localhost:5000/${cleanPath}`;
-    }
+if (!fileUrl.startsWith('http')) {
+  const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+  const cleanPath = fileUrl.replace(/^.*?backend[\\/]/, '').replace(/\\/g, '/');
+  fileUrl = `${baseUrl}/${cleanPath}`;
+}
     
     console.log('Opening file:', fileUrl);
     window.open(fileUrl, '_blank');

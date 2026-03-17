@@ -60,7 +60,7 @@ const StudentAssignments = () => {
   const fetchData = async () => {
     try {
       setLoading(true);
-      
+
       const [assignmentsRes, subjectsRes] = await Promise.all([
         api.get('/assignments/student'),
         api.get('/subjects/student')
@@ -160,9 +160,9 @@ const StudentAssignments = () => {
     setDeleting(true);
     try {
       await api.delete(`/assignments/submission/${selectedAssignment.submission._id}`);
-      
+
       // Update the assignment in the list
-      setAssignments(prevAssignments => 
+      setAssignments(prevAssignments =>
         prevAssignments.map(assignment => {
           if (assignment._id === selectedAssignment._id) {
             return {
@@ -174,20 +174,20 @@ const StudentAssignments = () => {
           return assignment;
         })
       );
-      
+
       // Update selected assignment
       setSelectedAssignment(prev => ({
         ...prev,
         status: 'pending',
         submission: null
       }));
-      
+
       toast.success('Submission deleted successfully');
       setShowDeleteConfirmation(false);
-      
+
       // Refresh data to ensure everything is in sync
       await fetchData();
-      
+
     } catch (error) {
       console.error('Failed to delete submission:', error);
       toast.error(error.response?.data?.message || 'Failed to delete submission');
@@ -212,19 +212,21 @@ const StudentAssignments = () => {
 
   const getFileUrl = (filePath) => {
     if (!filePath) return null;
-    
+
+    // Get base URL from environment variable
+    const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+
     if (filePath.startsWith('http')) {
       return filePath;
     }
-    
-    if (filePath.startsWith('/uploads')) {
-      return `http://localhost:5000${filePath}`;
-    }
-    
-    const cleanPath = filePath.replace(/^.*?backend[\\/]/, '').replace(/\\/g, '/');
-    return `http://localhost:5000/${cleanPath}`;
-  };
 
+    if (filePath.startsWith('/uploads')) {
+      return `${baseUrl}${filePath}`;
+    }
+
+    const cleanPath = filePath.replace(/^.*?backend[\\/]/, '').replace(/\\/g, '/');
+    return `${baseUrl}/${cleanPath}`;
+  };
   const handleViewSubmission = (submission) => {
     if (!submission?.fileUrl) {
       toast.error('No file URL available');
@@ -248,15 +250,15 @@ const StudentAssignments = () => {
     // 1. Assignment is submitted (not graded)
     // 2. Deadline hasn't passed
     // 3. Has a submission
-    return assignment.status === 'submitted' && 
-           assignment.submission && 
-           new Date(assignment.deadline) > new Date();
+    return assignment.status === 'submitted' &&
+      assignment.submission &&
+      new Date(assignment.deadline) > new Date();
   };
 
   const getStatusBadge = (assignment) => {
     const now = new Date();
     const deadline = new Date(assignment.deadline);
-    
+
     if (assignment.status === 'graded') {
       return {
         text: `Graded (${assignment.marks}/${assignment.maxMarks})`,
@@ -307,13 +309,13 @@ const StudentAssignments = () => {
 
   const filteredAssignments = assignments
     .filter(assignment => {
-      const matchesSearch = 
+      const matchesSearch =
         assignment.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         assignment.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         assignment.subject?.name?.toLowerCase().includes(searchTerm.toLowerCase());
 
       const matchesSubject = subjectFilter === 'all' || assignment.subject?._id === subjectFilter;
-      
+
       let matchesStatus = true;
       if (statusFilter === 'pending') {
         matchesStatus = assignment.status === 'pending';
@@ -508,11 +510,11 @@ const StudentAssignments = () => {
                           </span>
                         )}
                       </div>
-                      
+
                       <p className="text-sm text-gray-600 dark:text-gray-300 mb-2 line-clamp-2">
                         {assignment.description}
                       </p>
-                      
+
                       <div className="flex flex-wrap items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
                         <span className="flex items-center gap-1">
                           <BookOpenIcon className="h-4 w-4" />
@@ -560,7 +562,7 @@ const StudentAssignments = () => {
                       >
                         <EyeIcon className="h-5 w-5" />
                       </button>
-                      
+
                       {canSubmit && (
                         <button
                           onClick={() => handleSubmitAssignment(assignment)}
@@ -654,12 +656,11 @@ const StudentAssignments = () => {
               </div>
               <div className="bg-gray-50 dark:bg-gray-800/50 p-3 rounded-lg border border-gray-200 dark:border-gray-700">
                 <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Status</p>
-                <span className={`px-2 py-1 text-xs font-medium rounded-full ${
-                  selectedAssignment.status === 'graded' ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400' :
-                  selectedAssignment.status === 'submitted' ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-400' :
-                  selectedAssignment.status === 'late' ? 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-400' :
-                  'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-400'
-                }`}>
+                <span className={`px-2 py-1 text-xs font-medium rounded-full ${selectedAssignment.status === 'graded' ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400' :
+                    selectedAssignment.status === 'submitted' ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-400' :
+                      selectedAssignment.status === 'late' ? 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-400' :
+                        'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-400'
+                  }`}>
                   {selectedAssignment.status || 'Pending'}
                 </span>
               </div>

@@ -22,22 +22,22 @@ const Login = () => {
     programs: 0
   });
   const [loadingData, setLoadingData] = useState(true);
-  
+
   // 2FA states
   const [show2FAModal, setShow2FAModal] = useState(false);
   const [tempToken, setTempToken] = useState('');
   const [pendingUser, setPendingUser] = useState(null);
   const [twoFAMethod, setTwoFAMethod] = useState('app');
-  
+
   const { login } = useAuth();
   const navigate = useNavigate();
 
   // Create a public axios instance
+  const baseURL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
   const publicApi = axios.create({
-    baseURL: 'http://localhost:5000/api',
+    baseURL: `${baseURL}/api`,
     timeout: 8000,
   });
-
   // Fetch university data on mount
   useEffect(() => {
     const fetchUniversityData = async () => {
@@ -49,7 +49,7 @@ const Login = () => {
         try {
           const deptResponse = await publicApi.get('/departments/public');
           console.log('Departments response:', deptResponse.data);
-          
+
           if (Array.isArray(deptResponse.data)) {
             setDepartments(deptResponse.data.slice(0, 6));
           } else if (deptResponse.data?.data && Array.isArray(deptResponse.data.data)) {
@@ -68,7 +68,7 @@ const Login = () => {
           // Try to get all stats in one call first
           const statsResponse = await publicApi.get('/stats/all');
           console.log('Stats response:', statsResponse.data);
-          
+
           setStats({
             students: statsResponse.data.students || statsResponse.data.totalStudents || 0,
             faculty: statsResponse.data.faculty || statsResponse.data.totalFaculty || 0,
@@ -76,7 +76,7 @@ const Login = () => {
           });
         } catch (statsError) {
           console.log('Single stats endpoint failed, trying individual endpoints:', statsError);
-          
+
           // Fallback to individual endpoints
           try {
             const [studentsRes, facultyRes, programsRes] = await Promise.allSettled([
@@ -117,7 +117,7 @@ const Login = () => {
     try {
       console.log('Attempting login...');
       const result = await login(email, password);
-      
+
       // Check if 2FA is required
       if (result.requires2FA) {
         console.log('2FA required, showing modal...');
@@ -199,7 +199,7 @@ const Login = () => {
                 Welcome to <br />
                 <span className="text-yellow-300">University Portal</span>
               </h2>
-              
+
               <p className="text-white/80 text-lg mb-12 leading-relaxed max-w-lg">
                 Access your courses, track your progress, connect with faculty, and manage your academic journey all in one place.
               </p>
@@ -231,7 +231,7 @@ const Login = () => {
                   <FiBookOpen className="text-yellow-300" />
                   Academic Departments
                 </h3>
-                
+
                 <div className="grid grid-cols-2 gap-3">
                   {departments.map((dept, index) => (
                     <div key={dept._id || index} className="bg-white/5 backdrop-blur-sm rounded-lg px-4 py-2 flex items-center gap-2 hover:bg-white/10 transition-colors">

@@ -33,10 +33,11 @@ const Register = () => {
   const navigate = useNavigate();
 
   // Create a public axios instance
-  const publicApi = axios.create({
-    baseURL: 'http://localhost:5000/api',
-    timeout: 10000,
-  });
+  const baseURL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+const publicApi = axios.create({
+    baseURL: `${baseURL}/api`,
+    timeout: 8000,
+});
 
   // Update password checks when password changes
   useEffect(() => {

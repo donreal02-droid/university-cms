@@ -46,10 +46,13 @@ const TeacherAssignments = () => {
   const getFileUrl = (filePath) => {
     if (!filePath) return null;
     if (filePath.startsWith('http')) return filePath;
-    
+
+    // Get base URL from environment variable
+    const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+
     // Remove any Windows path prefixes and fix backslashes
     const cleanPath = filePath.replace(/^.*?backend[\\/]/, '').replace(/\\/g, '/');
-    return `http://localhost:5000/${cleanPath}`;
+    return `${baseUrl}/${cleanPath}`;
   };
 
   useEffect(() => {
@@ -59,7 +62,7 @@ const TeacherAssignments = () => {
   const fetchData = async () => {
     try {
       setLoading(true);
-      
+
       const [assignmentsRes, subjectsRes] = await Promise.all([
         api.get('/assignments/teacher'),
         api.get('/subjects/teacher')
@@ -75,15 +78,15 @@ const TeacherAssignments = () => {
       }
       setSubjects(subjectsData);
 
-      const assignmentsData = Array.isArray(assignmentsRes.data) 
-        ? assignmentsRes.data 
+      const assignmentsData = Array.isArray(assignmentsRes.data)
+        ? assignmentsRes.data
         : assignmentsRes.data?.assignments || [];
       setAssignments(assignmentsData);
 
       const now = new Date();
       const active = assignmentsData.filter(a => new Date(a.deadline) > now).length;
       const expired = assignmentsData.filter(a => new Date(a.deadline) <= now).length;
-      const totalSubmissions = assignmentsData.reduce((acc, a) => 
+      const totalSubmissions = assignmentsData.reduce((acc, a) =>
         acc + (a.submissions?.length || 0), 0
       );
 
@@ -154,16 +157,16 @@ const TeacherAssignments = () => {
   };
 
   const filteredAssignments = assignments.filter(assignment => {
-    const matchesSearch = 
+    const matchesSearch =
       assignment.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       assignment.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       assignment.subject?.name?.toLowerCase().includes(searchTerm.toLowerCase());
 
     const matchesSubject = subjectFilter === 'all' || assignment.subject?._id === subjectFilter;
-    
+
     const now = new Date();
     const deadline = new Date(assignment.deadline);
-    const matchesStatus = statusFilter === 'all' || 
+    const matchesStatus = statusFilter === 'all' ||
       (statusFilter === 'active' && deadline > now) ||
       (statusFilter === 'expired' && deadline <= now);
 
@@ -368,11 +371,11 @@ const TeacherAssignments = () => {
                           {status.text}
                         </span>
                       </div>
-                      
+
                       <p className="text-sm text-gray-600 dark:text-gray-300 mb-2 line-clamp-2">
                         {assignment.description}
                       </p>
-                      
+
                       <div className="flex flex-wrap items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
                         <span className="flex items-center gap-1">
                           <DocumentTextIcon className="h-4 w-4" />
@@ -401,7 +404,7 @@ const TeacherAssignments = () => {
                             {pendingCount} Pending · {gradedCount} Graded
                           </div>
                           <div className="w-24 h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full mt-1">
-                            <div 
+                            <div
                               className="h-1.5 bg-green-500 dark:bg-green-400 rounded-full"
                               style={{ width: `${(gradedCount / submissionCount) * 100}%` }}
                             />
@@ -536,11 +539,10 @@ const TeacherAssignments = () => {
                         </div>
                       </div>
                       <div className="flex items-center gap-3">
-                        <span className={`text-xs px-2 py-1 rounded-full ${
-                          submission.status === 'graded' 
+                        <span className={`text-xs px-2 py-1 rounded-full ${submission.status === 'graded'
                             ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400'
                             : 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-400'
-                        }`}>
+                          }`}>
                           {submission.status || 'Submitted'}
                         </span>
                         {submission.marks && (

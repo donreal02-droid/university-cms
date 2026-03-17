@@ -65,19 +65,22 @@ const TeacherProfile = () => {
   // ✅ FIXED: Clean function to get image URL
   const getImageUrl = (filename) => {
     if (!filename) return null;
-    
+
     // If it's already a full URL, return as is
     if (filename.startsWith('http')) {
       return filename;
     }
-    
+
+    // Get base URL from environment variable
+    const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+
     // If it starts with /uploads, add base URL
     if (filename.startsWith('/uploads')) {
-      return `http://localhost:5000${filename}`;
+      return `${baseUrl}${filename}`;
     }
-    
+
     // Otherwise, assume it's just a filename
-    return `http://localhost:5000/uploads/profiles/${filename}`;
+    return `${baseUrl}/uploads/profiles/${filename}`;
   };
 
   const handleInputChange = (e) => {
@@ -113,7 +116,7 @@ const TeacherProfile = () => {
 
   const handlePasswordChange = async (e) => {
     e.preventDefault();
-    
+
     const errors = {};
     if (!formData.currentPassword) {
       errors.currentPassword = 'Current password is required';
@@ -176,7 +179,7 @@ const TeacherProfile = () => {
     try {
       setLoading(true);
       console.log('Uploading image...', file.name);
-      
+
       const response = await api.post('/auth/profile/image', formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
@@ -189,7 +192,7 @@ const TeacherProfile = () => {
       toast.success('Profile picture updated successfully');
     } catch (error) {
       console.error('Failed to upload image:', error);
-      
+
       if (error.response?.status === 404) {
         toast.error('Image upload endpoint not found. Please check backend.');
       } else if (error.response?.data?.message) {
@@ -238,7 +241,7 @@ const TeacherProfile = () => {
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
         {/* Cover Photo */}
         <div className="h-32 bg-gradient-to-r from-blue-500 to-indigo-600 dark:from-blue-600 dark:to-indigo-700"></div>
-        
+
         {/* Profile Info */}
         <div className="px-6 pb-6">
           {/* Avatar - FIXED SECTION */}
@@ -270,7 +273,7 @@ const TeacherProfile = () => {
                 />
               </label>
             </div>
-            
+
             {/* Role Badge */}
             <div className="mt-12">
               <span className="px-3 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-400 rounded-full text-sm font-medium flex items-center gap-1">
@@ -440,7 +443,7 @@ const TeacherProfile = () => {
       {/* Security Settings */}
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
         <h2 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Security Settings</h2>
-        
+
         <div className="space-y-4">
           <button
             onClick={() => setShowPasswordModal(true)}
