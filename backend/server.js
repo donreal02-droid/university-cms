@@ -8,13 +8,22 @@ dotenv.config();
 
 const app = express();
 
-// Middleware
-app.use(cors({
-  origin: 'http://localhost:3000',
-  credentials: true
-}));
+// ============ FIXED CORS CONFIGURATION ============
+const corsOptions = {
+  origin: ['http://localhost:3000', 'https://university-cms-two.vercel.app'],
+  credentials: true,
+  optionsSuccessStatus: 200
+};
+
+app.use(cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// ============ REQUEST LOGGING (for debugging) ============
+app.use((req, res, next) => {
+  console.log(`📡 ${new Date().toISOString()} - ${req.method} ${req.originalUrl}`);
+  next();
+});
 
 // Serve static files
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
@@ -24,8 +33,8 @@ mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/universit
   useNewUrlParser: true,
   useUnifiedTopology: true
 })
-.then(() => console.log('✅ MongoDB connected successfully'))
-.catch(err => console.error('❌ MongoDB connection error:', err));
+  .then(() => console.log('✅ MongoDB connected successfully'))
+  .catch(err => console.error('❌ MongoDB connection error:', err));
 
 // Import routes
 const authRoutes = require('./routes/auth');
@@ -60,10 +69,10 @@ app.use('/api/stats', statsRoutes);
 
 // Test route
 app.get('/api/test', (req, res) => {
-  res.json({ 
-    success: true, 
-    message: 'Backend is working!', 
-    timestamp: new Date().toISOString() 
+  res.json({
+    success: true,
+    message: 'Backend is working!',
+    timestamp: new Date().toISOString()
   });
 });
 
@@ -88,10 +97,10 @@ if (process.env.NODE_ENV === 'development') {
         });
       }
     });
-    res.json({ 
+    res.json({
       success: true,
       total: routes.length,
-      routes 
+      routes
     });
   });
 }
@@ -102,7 +111,6 @@ app.use('/api', sessionTracker);
 // ============ PROTECTED ROUTES ============
 app.use('/api/users', protect, userRoutes);
 app.use('/api/university', protect, universityRoutes);
-
 app.use('/api/subjects', protect, subjectRoutes);
 app.use('/api/notes', protect, noteRoutes);
 app.use('/api/assignments', protect, assignmentRoutes);
@@ -118,15 +126,12 @@ app.use('/api/quiz-submissions', protect, quizSubmissionRoutes);
 app.use('/api/teacher/students', protect, teacherStudentRoutes);
 
 // ============ NOTIFICATION ROUTES ============
-// Regular notifications - /api/notifications/*
 app.use('/api/notifications', protect, notificationRoutes);
-
-// Notification settings - /api/notification-settings/* (different path)
 app.use('/api/notification-settings', protect, notificationSettingsRoutes);
 
 // Protected test route
 app.get('/api/protected-test', protect, (req, res) => {
-  res.json({ 
+  res.json({
     success: true,
     message: 'You are authenticated!',
     user: {
@@ -138,10 +143,13 @@ app.get('/api/protected-test', protect, (req, res) => {
   });
 });
 
+// ============ CORS PREFLIGHT HANDLER ============
+app.options('*', cors(corsOptions));
+
 // ============ ERROR HANDLING ============
 // 404 handler
 app.use((req, res) => {
-  res.status(404).json({ 
+  res.status(404).json({
     success: false,
     message: `Route not found: ${req.method} ${req.originalUrl}`
   });
@@ -149,7 +157,8 @@ app.use((req, res) => {
 
 // Global error handler
 app.use((err, req, res, next) => {
-  console.error('Server Error:', err.message);
+  console.error('❌ Server Error:', err.message);
+  console.error(err.stack);
   res.status(err.status || 500).json({
     success: false,
     message: err.message || 'Internal server error',
@@ -165,5 +174,6 @@ app.listen(PORT, () => {
   console.log(`📍 Port: ${PORT}`);
   console.log(`📍 Environment: ${process.env.NODE_ENV || 'development'}`);
   console.log(`📍 MongoDB: Connected`);
+  console.log(`📍 CORS allowed: http://localhost:3000, https://university-cms-two.vercel.app`);
   console.log(`=================================\n`);
 });
