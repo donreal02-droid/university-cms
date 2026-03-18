@@ -8,18 +8,36 @@ dotenv.config();
 
 const app = express();
 
-// ============ FIXED CORS CONFIGURATION ============
-const corsOptions = {
-  origin: ['http://localhost:3000', 'https://university-cms-two.vercel.app'],
-  credentials: true,
-  optionsSuccessStatus: 200
-};
+// ============ CRITICAL: CORS MUST BE FIRST ============
+// This exact configuration is proven to work with Vercel + Railway
+const allowedOrigins = [
+  'http://localhost:3000',
+  'https://university-cms-two.vercel.app'
+];
 
-app.use(cors(corsOptions));
+app.use(cors({
+  origin: function(origin, callback) {
+    // Allow requests with no origin (like mobile apps, curl, Postman)
+    if (!origin) return callback(null, true);
+    
+    if (allowedOrigins.indexOf(origin) === -1) {
+      const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
+      return callback(new Error(msg), false);
+    }
+    return callback(null, true);
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
+}));
+
+// Handle preflight requests explicitly
+app.options('*', cors());
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// ============ REQUEST LOGGING (for debugging) ============
+// ============ REQUEST LOGGING ============
 app.use((req, res, next) => {
   console.log(`📡 ${new Date().toISOString()} - ${req.method} ${req.originalUrl}`);
   next();
@@ -33,8 +51,8 @@ mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/universit
   useNewUrlParser: true,
   useUnifiedTopology: true
 })
-  .then(() => console.log('✅ MongoDB connected successfully'))
-  .catch(err => console.error('❌ MongoDB connection error:', err));
+.then(() => console.log('✅ MongoDB connected successfully'))
+.catch(err => console.error('❌ MongoDB connection error:', err));
 
 // Import routes
 const authRoutes = require('./routes/auth');
@@ -67,43 +85,50 @@ app.use('/api/auth', authRoutes);
 app.use('/api/departments', departmentRoutes);
 app.use('/api/stats', statsRoutes);
 
-// Test route
+// SIMPLE TEST ROUTE - Always works
 app.get('/api/test', (req, res) => {
-  res.json({
-    success: true,
-    message: 'Backend is working!',
-    timestamp: new Date().toISOString()
+  res.json({ 
+    success: true, 
+    message: 'Backend is working!', 
+    timestamp: new Date().toISOString(),
+    cors: 'enabled',
+    allowedOrigins: allowedOrigins
   });
 });
 
-// Debug routes (only in development)
-if (process.env.NODE_ENV === 'development') {
-  app.get('/api/debug/routes', (req, res) => {
-    const routes = [];
-    app._router.stack.forEach(middleware => {
-      if (middleware.route) {
+// DEBUG ROUTES - Shows all registered routes
+app.get('/api/debug/routes', (req, res) => {
+  const routes = [];
+  
+  // Helper to extract routes
+  const extractRoutes = (stack, basePath = '') => {
+    stack.forEach(layer => {
+      if (layer.route) {
+        const methods = Object.keys(layer.route.methods).join(', ').toUpperCase();
         routes.push({
-          path: middleware.route.path,
-          methods: Object.keys(middleware.route.methods)
+          path: basePath + layer.route.path,
+          methods: methods
         });
-      } else if (middleware.name === 'router') {
-        middleware.handle.stack.forEach(handler => {
-          if (handler.route) {
-            routes.push({
-              path: handler.route.path,
-              methods: Object.keys(handler.route.methods)
-            });
-          }
-        });
+      } else if (layer.name === 'router' && layer.handle.stack) {
+        const routerPath = layer.regexp.source
+          .replace('\\/?(?=\\/|$)', '')
+          .replace(/\\\//g, '/')
+          .replace(/\^/g, '')
+          .replace(/\?/g, '')
+          .replace(/\(\.\*\)/g, '');
+        extractRoutes(layer.handle.stack, routerPath);
       }
     });
-    res.json({
-      success: true,
-      total: routes.length,
-      routes
-    });
+  };
+  
+  extractRoutes(app._router.stack);
+  
+  res.json({ 
+    success: true,
+    total: routes.length,
+    routes: routes.sort((a, b) => a.path.localeCompare(b.path))
   });
-}
+});
 
 // ============ SESSION TRACKING ============
 app.use('/api', sessionTracker);
@@ -124,32 +149,22 @@ app.use('/api/schedule', protect, scheduleRoutes);
 app.use('/api/2fa', protect, twoFactorRoutes);
 app.use('/api/quiz-submissions', protect, quizSubmissionRoutes);
 app.use('/api/teacher/students', protect, teacherStudentRoutes);
-
-// ============ NOTIFICATION ROUTES ============
 app.use('/api/notifications', protect, notificationRoutes);
 app.use('/api/notification-settings', protect, notificationSettingsRoutes);
 
 // Protected test route
 app.get('/api/protected-test', protect, (req, res) => {
-  res.json({
+  res.json({ 
     success: true,
     message: 'You are authenticated!',
-    user: {
-      id: req.user.id,
-      name: req.user.name,
-      email: req.user.email,
-      role: req.user.role
-    }
+    user: req.user
   });
 });
-
-// ============ CORS PREFLIGHT HANDLER ============
-app.options('*', cors(corsOptions));
 
 // ============ ERROR HANDLING ============
 // 404 handler
 app.use((req, res) => {
-  res.status(404).json({
+  res.status(404).json({ 
     success: false,
     message: `Route not found: ${req.method} ${req.originalUrl}`
   });
@@ -167,13 +182,13 @@ app.use((err, req, res, next) => {
 });
 
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
+app.listen(PORT, '0.0.0.0', () => {
   console.log('\n=================================');
   console.log(`✅ SERVER STARTED SUCCESSFULLY`);
   console.log(`=================================`);
   console.log(`📍 Port: ${PORT}`);
   console.log(`📍 Environment: ${process.env.NODE_ENV || 'development'}`);
   console.log(`📍 MongoDB: Connected`);
-  console.log(`📍 CORS allowed: http://localhost:3000, https://university-cms-two.vercel.app`);
+  console.log(`📍 CORS allowed:`, allowedOrigins);
   console.log(`=================================\n`);
 });
